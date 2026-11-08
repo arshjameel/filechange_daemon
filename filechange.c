@@ -24,6 +24,19 @@ int IeventStatus = -1;
 
 char *ProgramTitle = "filechange";
 
+void signal_handler(int signal) {
+  int closeStatus = -1;
+  printf("\nSignal received, cleaning up...\n");
+  
+  closeStatus = inotify_rm_watch(IeventQueue, IeventStatus);
+  if (closeStatus == -1) {
+    fprintf(stderr, "Error removing from watch queue!\n");
+  }
+
+  close(IeventQueue);
+  exit(EXIT_SUCCESS);
+}
+
 int main(int argc, char** argv) {
 
   bool libnotifyInitStatus = false;
@@ -80,6 +93,10 @@ int main(int argc, char** argv) {
     fprintf(stderr, "Error adding file to watch instance.\n");
     exit(EXT_ERR_ADD_WATCH);
   }
+
+  signal(SIGABRT, signal_handler);
+  signal(SIGINT, signal_handler);
+  signal(SIGTERM, signal_handler);
 
   while (true) {
     printf("Waiting for ievent...\n");
